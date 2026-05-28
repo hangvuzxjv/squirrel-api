@@ -1,54 +1,42 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.Sqlite;
+using System.Collections.Generic;
 using SquirrelAPI.Models;
 
 namespace SquirrelAPI.Controllers
 {
-    [ApiController]
     [Route("api/[controller]")]
+    [ApiController]
     public class CustomerController : ControllerBase
     {
-        private static List<KhachHang> customers = new List<KhachHang>
-        {
-            new KhachHang 
-            { 
-                Id = 1, 
-                HoTen = "Nguyễn Văn A", 
-                Email = "nguyenvana@example.com", 
-                SoDienThoai = "0901234567" 
-            },
-            new KhachHang 
-            { 
-                Id = 2, 
-                HoTen = "Trần Thị B", 
-                Email = "tranthib@example.com", 
-                SoDienThoai = "0902345678" 
-            },
-            new KhachHang 
-            { 
-                Id = 3, 
-                HoTen = "Lê Văn C", 
-                Email = "levanc@example.com", 
-                SoDienThoai = "0903456789" 
-            },
-            new KhachHang 
-            { 
-                Id = 4, 
-                HoTen = "Phạm Thị D", 
-                Email = "phamthid@example.com", 
-                SoDienThoai = "0904567890" 
-            },
-            new KhachHang 
-            { 
-                Id = 5, 
-                HoTen = "Hoàng Văn E", 
-                Email = "hoangvane@example.com", 
-                SoDienThoai = "0905678901" 
-            }
-        };
+        // Đường dẫn trỏ tới file CSDL SQLite vừa tạo
+        private readonly string connectionString = "Data Source=Database/squirrel.db";
 
         [HttpGet]
         public IActionResult GetCustomers()
         {
+            var customers = new List<KhachHang>();
+
+            using (var connection = new SqliteConnection(connectionString))
+            {
+                connection.Open();
+                var command = connection.CreateCommand();
+                command.CommandText = "SELECT Id, HoTen, Email, SoDienThoai FROM KhachHang";
+
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        customers.Add(new KhachHang
+                        {
+                            Id = reader.GetInt32(0),
+                            HoTen = reader.GetString(1),
+                            Email = reader.GetString(2),
+                            SoDienThoai = reader.GetString(3)
+                        });
+                    }
+                }
+            }
             return Ok(customers);
         }
     }
